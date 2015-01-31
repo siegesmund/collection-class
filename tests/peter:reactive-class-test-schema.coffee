@@ -3,6 +3,9 @@ TestCollection2 = new Meteor.Collection null
 
 Schema = {}
 
+##
+## Basic Schema to test against
+##
 
 Schema.Person = new SimpleSchema(
 	firstName:
@@ -32,6 +35,10 @@ Schema.Person = new SimpleSchema(
 		optional: true
 )
 
+
+##
+## More complex schema that describes a Meteor user
+##
 
 Schema.UserCountry = new SimpleSchema(
 	name:
@@ -129,7 +136,7 @@ Schema.User = new SimpleSchema(
 )
 
 TestCollection.attachSchema Schema.Person
-TestCollection2.attachSchema Schema.Person
+TestCollection2.attachSchema Schema.User
 
 
 
