@@ -26,12 +26,6 @@ class ReactiveClassBase
 						this[setterName] = this._setter(items)
 					else
 						this._arrayProperties.push item
-			'''
-			_this = this
-			Tracker.autorun ->
-				properties = _this.properties()
-				console.log "This was changed"
-			'''
 		return
 
 	##

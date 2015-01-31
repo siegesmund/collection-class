@@ -50,7 +50,7 @@ Tinytest.add "Properties method returns properties", (test) ->
 	tearDown()
 	return
 
-
+# Test using basic schema
 Tinytest.add "Invoking the _new method creates an object in the Mongo collection", (test) ->
 	setUp()
 	testClass._new()
@@ -58,6 +58,7 @@ Tinytest.add "Invoking the _new method creates an object in the Mongo collection
 	tearDown()
 	return
 
+# Test using basic schema
 Tinytest.add "A newly created registers its collection id", (test) ->
 	setUp()
 	testClass._new()
@@ -66,6 +67,7 @@ Tinytest.add "A newly created registers its collection id", (test) ->
 	tearDown()
 	return
 
+# Test using basic schema
 Tinytest.add "An instance's delete method removes its' corresponding document from the database", (test) ->
 	setUp()
 	testClass._new()
@@ -77,4 +79,21 @@ Tinytest.add "An instance's delete method removes its' corresponding document fr
 	tearDown()
 	return
 
-Tinytest.add "An instance's delete method removes all properties from the instance", (test) ->
+# Test using basic schema
+
+'''
+Tinytest.add "An instance's delete method removes all methods and properties from the instance", (test) ->
+	setUp()
+	testClass._new()
+	testClass.setFirstName("Test")
+	testClass.setLastName("Case")
+	console.log testClass
+	test.equal testClass.methods().length, 5
+	test.equal testClass.properties().length, 2
+
+	testClass.delete()
+	console.log testClass
+	test.equal testClass.methods().length, 0
+	test.equal testClass.properties().length, 0
+	return
+'''
