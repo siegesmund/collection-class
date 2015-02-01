@@ -2,19 +2,21 @@
 # requires alanning:roles
 #
 
+#
+# This must be subclassed as there is no facility for creating new users
+# It is a convenience Class that binds Meteor.users to CollectionClass
+# and disables default document creation (so that subclasses can implement
+# custom versions of Accounts
+#
+
 class User extends CollectionClass
 
-	constructor: (options) ->
-		super()
-		this._collection = Meteor.users
-		this._createAccessorMethods()
-		if not options._id
-			this._id = Accounts.createUser()
+	constructor: ->
+		super({'collection': Meteor.users, 'createNewDocInCollection': false})
 
-	userId: -> true
+	userId: -> this.id()
 
+	isInRole: (role) -> Roles.userIsInRole(this.id(), role)
 
-	isInRole: -> true
+	addToRole: (role) -> Roles.addUsersToRoles(this.id(), role)
 
-
-	addToRole: -> true

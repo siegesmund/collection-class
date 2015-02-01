@@ -1,10 +1,10 @@
-# A small wrapper around MiniMongo that provides a class-based interface to Meteor/Mongo collections
+#
+# A small wrapper around MiniMongo that provides a
+# class-based interface to Meteor/Mongo collections
 #
 # Requires aldeed:simple-schema, aldeed:collection2
 #
-# Can:
-# Create a new object and manipulate its' properties using getters and setters
-# Finding and working with existing objects is left to subclasses
+#
 
 class CollectionClass
 
@@ -15,7 +15,7 @@ class CollectionClass
 
 		if options and options.collection
 			this._collection = options.collection						# Save a reference to the collection
-			if options.createUser isnt false
+			if options.createNewDocInCollection isnt false
 				if options._id											# If an id is passed
 					this._id = options._id								# Set the instance id to the id
 
@@ -26,7 +26,7 @@ class CollectionClass
 					this._id = this._save(options.arguments)			# Create a new document with arguments and save the id
 
 		# Create getters and setters for each property
-		if this._schema() then this._createAccessors(this._schema()._schemaKeys)
+		if this._schema() then this._createAccessors(this._schemaKeys())
 		return
 
 	##
@@ -61,21 +61,20 @@ class CollectionClass
 			return p
 
 	_setter: (objectPath) ->
-		return (value) ->
+		return (value, callback) ->
 			modifier = {}
 			modifier[objectPath] = value
-			return this._save({_id:this._id}, {$set:modifier})
+			return this._save({_id:this._id}, {$set:modifier}, callback)
 
 	#
 	# / End function factories
 	#
 
-	_save: (selector, modifier) ->
+	_save: (selector, modifier={}, callback) ->
 		if this.id()
-			if ! modifier then modifier = {}
-			this._collection.update(selector,modifier)
+			this._collection.update(selector, modifier, callback)
 		else
-			this._collection.insert(selector)
+			this._collection.insert(selector, callback)
 
 	_schema: -> # Returns a string representation of object keys specified by the schema
 		if _.has(this._collection, '_c2')
@@ -83,6 +82,8 @@ class CollectionClass
 				return this._collection._c2._simpleSchema
 		return false
 
+	_schemaKeys: ->
+		if this._schema()._schemaKeys then return this._schema()._schemaKeys
 	##
 	## Public Instance Methods
 	##
@@ -93,18 +94,16 @@ class CollectionClass
 	methods: ->
 		return _.filter _.functions(this), (item) -> item.indexOf('_') < 0 # filter out private methods
 
-	properties: ->
-		return _.filter (_.difference Object.keys(this), this.methods()), (item) -> item.indexOf('_') < 0
-
 	exists: (selector) ->
 		if this._collection.find(selector, {fields:{_id:1}}).count() is 0
 			return false
 		return true
 
-	delete: ->
-		response = this._collection.remove {_id:this._id}			# Remove document from its collection
-		if response is 0
+	delete: ()->
+		if this._collection.remove({_id:this.id()}) is 0		# Remove document from its collection
 			return false
 		else
+			delete this[key] for key in Object.keys(this) when key not in ['id', 'methods', 'exists', 'delete', '_id', '_collection'] # Remove getters and setters from the object
+			this._deleted = true
 			return true
 

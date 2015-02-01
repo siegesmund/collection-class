@@ -138,7 +138,7 @@ Schema.User = new SimpleSchema(
 		optional: true
 		blackbox: true
 )
-
+Meteor.users.attachSchema Schema.Person
 TestCollection.attachSchema Schema.Person
 TestCollection2.attachSchema Schema.User
 

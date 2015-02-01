@@ -1,7 +1,5 @@
 
-## Todo: test exists method
-## Todo: map user paths
-## Todo: finish user special class
+## Todo: test setter callback
 
 testClass = undefined
 
@@ -19,10 +17,23 @@ Tinytest.add "CollectionClass: creates a CollectionClass instance", (test) ->
 	tearDown()
 	return
 
+Tinytest.add "CollectionClass: test that the exist method works", (test) ->
+	setUp()
+	id = testClass.id()
+	# Test if the class exists in the collection
+	test.isTrue testClass.exists {_id:id}
+	# Delete the instance
+	testClass.delete()
+	# Test again if the class exists (this time it should not)
+	test.isFalse testClass.exists {_id:id}
+	tearDown()
+	return
+
 # Test using basic schema
 Tinytest.add "CollectionClass: creates getters and setters when an instance is created", (test) ->
 	setUp()
 	test.notEqual testClass.getFirstName, undefined
+	testClass.methods()
 	tearDown()
 	return
 
@@ -78,26 +89,10 @@ Tinytest.add "CollectionClass: set and get methods function in a nested string m
 # Test using basic schema
 Tinytest.add "CollectionClass: properties and methods methods should not return private methods/properties", (test) ->
 	setUp()
-	test.equal (_.filter testClass.properties(), (item) -> item.indexOf('_') > 0).length, 0
+	# test.equal (_.filter testClass.properties(), (item) -> item.indexOf('_') > 0).length, 0
 	test.equal (_.filter testClass.methods(), (item) -> item.indexOf('_') > 0).length, 0
 	tearDown()
 	return
-
-# Test using basic schema
-'''
-Tinytest.add "ReactiveClassBase: properties method returns properties", (test) ->
-	setUp()
-	# testClass._new()
-	testClass.setGender('male')
-	test.equal testClass.properties()[0], 'gender'
-	testObject = TestCollection.findOne({_id:testClass._id})
-	test.equal testObject.gender, 'male'
-	testClass.setGender('female')
-	testObject = TestCollection.findOne({_id:testClass._id})
-	test.equal testObject.gender, 'female'
-	tearDown()
-	return
-'''
 
 # Test using basic schema
 Tinytest.add "CollectionClass: invoking the _new method creates an object in the Mongo collection", (test) ->
@@ -127,17 +122,3 @@ Tinytest.add "CollectionClass: an instance's delete method removes its' correspo
 	test.equal TestCollection.find().fetch().length, 0
 	tearDown()
 	return
-
-# Test using basic schema
-
-'''
-Tinytest.add "An instance's delete method removes all properties from the instance", (test) ->
-	setUp()
-	testClass.setFirstName("Test")
-	testClass.setLastName("Case")
-	test.equal testClass.properties().length, 2
-
-	testClass.delete()
-	test.equal testClass.properties().length, 0
-	return
-'''
