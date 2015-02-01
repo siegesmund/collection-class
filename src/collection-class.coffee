@@ -25,8 +25,6 @@ class CollectionClass
 
 	# Creates a getter and setter for a given object path
 	_createAccessorMethods: (objectPath) ->
-		# Utility function to capitalize the first letter of a string
-
 		# This code parses the object path stored in the simple-schema schemaKeys;
 		# it condenses "." separated fields into camel case method names
 		if objectPath.indexOf('$') < 0	# Do not create getters and setters for array items
