@@ -1,9 +1,11 @@
-# A simple interface for objects and documents
+# A simple around MiniMongo that provides a class-based
+# interface to Meteor/Mongo collections
+#
 # Requires aldeed:simple-schema, aldeed:collection2
-
+#
 # Can:
 # Create a new object and manipulate its' properties using getters and setters
-# Finding and workign with existing objects is left to subclasses
+# Finding and working with existing objects is left to subclasses
 
 class ReactiveClassBase
 
@@ -11,6 +13,7 @@ class ReactiveClassBase
 	constructor: (collection) ->
 
 		String::titleCase = -> this.charAt(0).toUpperCase() + this.substring(1)
+
 		if collection
 			this._collection = collection				# Save a pointer to the collection
 			this._id = this._collection.insert({})		# Create a new document
@@ -42,13 +45,23 @@ class ReactiveClassBase
 	# stored reference to the properties' path on the class instance
 	_getter: (objectPath) ->
 		p = this
-		return -> (p = p[item]) for item in objectPath.split('.'); return p
+		#(p = p[item]) for item in objectPath.split('.'); return p
+		return ->
+			modifier = {}
+			modifier[objectPath] = 1
+			console.log modifier
+			p = this._collection.findOne({_id:this._id},{fields:modifier})
+			(p = p[item]) for item in objectPath.split('.')
+			return p
 
 	_setter: (objectPath) ->
 		_this = this							# store a reference to the base object as we won't be able to access it inside the closure
 		return (value) ->
-			p = _this							# store a reference to the base object that we can traverse
+			modifier = {}
+			modifier[objectPath] = value
+			return _this._collection.update({_id:this._id}, {$set:modifier})
 
+			'''
 			# This code is all to set the local value
 			items = objectPath.split('.')
 			for item,index in items			# need to get the index so we can tell where we're at on the array
@@ -62,7 +75,8 @@ class ReactiveClassBase
 			if _this._save(objectPath, value) is 0
 				p[item] = oldValue
 				throw new Error "Error: Mongo document not found. Value not set."
-			return
+			'''
+
 
 	#
 	# / End function factories
@@ -89,14 +103,6 @@ class ReactiveClassBase
 	id: ->
 		return this._id
 
-	track: ->
-		if Meteor.isClient
-			_this = this
-			Tracker.autorun ->
-				obj = _this._collection.findOne({_id:_this._id})
-				_.extend _this, obj
-		return
-
 	methods: ->
 		return _.filter _.functions(this), (item) -> item.indexOf('_') < 0 # filter out private methods
 
@@ -104,9 +110,9 @@ class ReactiveClassBase
 		return _.filter (_.difference Object.keys(this), this.methods()), (item) -> item.indexOf('_') < 0
 
 	delete: ->
-		affected = this._collection.remove {_id:this._id}			# Remove document from its collection
-		if affected is 1
-			delete this[key] for key in Object.keys(this) 	# Remove all properties and methods
+		response = this._collection.remove {_id:this._id}			# Remove document from its collection
+		if response is 0
+			return false
 		else
-			throw new Error 'error when attempting to delete document'
-		return
+			return true
+
