@@ -1,4 +1,8 @@
 
+## Todo: test exists method
+## Todo: map user paths
+## Todo: finish user special class
+
 testClass = undefined
 
 tearDown = ->
@@ -18,6 +22,22 @@ Tinytest.add "CollectionClass: creates a CollectionClass instance", (test) ->
 # Test using basic schema
 Tinytest.add "CollectionClass: creates getters and setters when an instance is created", (test) ->
 	setUp()
+	test.notEqual testClass.getFirstName, undefined
+	tearDown()
+	return
+
+Tinytest.add "CollectionClass: is instantiated as an existing document when an id is passed as an argument", (test) ->
+	setUp()
+	testClass.setFirstName('Test')
+	testClass.setLastName('User')
+	testClassId =  testClass.id()
+
+	secondTestClass = new CollectionClass({'collection': TestCollection, '_id': testClassId})
+	secondTestClass.setFirstName('User')
+
+	test.equal testClass.getFirstName(), 'User'
+	test.equal TestCollection.find().count(), 1
+
 	test.notEqual testClass.getFirstName, undefined
 	tearDown()
 	return

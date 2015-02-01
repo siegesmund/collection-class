@@ -14,17 +14,31 @@ class CollectionClass
 		String::titleCase = -> this.charAt(0).toUpperCase() + this.substring(1)
 
 		if options and options.collection
-			this._collection = options.collection				# Save a pointer to the collection
-			this._id = this._collection.insert({})		# Create a new document
-			this._createAccessorMethods objectPath for objectPath in this._schema()._schemaKeys when this._schema()
+			this._collection = options.collection						# Save a reference to the collection
+			if options.createUser isnt false
+				if options._id											# If an id is passed
+					this._id = options._id								# Set the instance id to the id
+
+					if ! this.exists({_id: this.id()})					# If it doesn't exist in the collection
+						this._save({_id: this.id()})					# create it
+				else													# Otherwise, an id wasn't passed
+					if ! options.arguments then options.arguments = {}	# if there are no arguments, create an empty object
+					this._id = this._save(options.arguments)			# Create a new document with arguments and save the id
+
+		# Create getters and setters for each property
+		if this._schema() then this._createAccessors(this._schema()._schemaKeys)
 		return
 
 	##
 	## Private Methods
 	##
 
+	_createAccessors: (objectKeys) ->
+		this._createGetterAndSetterForPath objectPath for objectPath in objectKeys
+
+
 	# Creates a getter and setter for a given object path
-	_createAccessorMethods: (objectPath) ->
+	_createGetterAndSetterForPath: (objectPath) ->
 		# This code parses the object path stored in the simple-schema schemaKeys;
 		# it condenses "." separated fields into camel case method names
 		if objectPath.indexOf('$') < 0	# Do not create getters and setters for array items
@@ -50,19 +64,18 @@ class CollectionClass
 		return (value) ->
 			modifier = {}
 			modifier[objectPath] = value
-			return this._collection.update({_id:this._id}, {$set:modifier})
+			return this._save({_id:this._id}, {$set:modifier})
 
 	#
 	# / End function factories
 	#
 
-	_save: (path, value) ->
-		modifier = {}
-		modifier[path] = value
-		return this._collection.update({_id:this._id}, {$set:modifier})
-
-	_toObject: ->
-		return _.pick(this, this.properties())
+	_save: (selector, modifier) ->
+		if this.id()
+			if ! modifier then modifier = {}
+			this._collection.update(selector,modifier)
+		else
+			this._collection.insert(selector)
 
 	_schema: -> # Returns a string representation of object keys specified by the schema
 		if _.has(this._collection, '_c2')
@@ -71,7 +84,7 @@ class CollectionClass
 		return false
 
 	##
-	## Public Methods
+	## Public Instance Methods
 	##
 
 	id: ->
@@ -82,6 +95,11 @@ class CollectionClass
 
 	properties: ->
 		return _.filter (_.difference Object.keys(this), this.methods()), (item) -> item.indexOf('_') < 0
+
+	exists: (selector) ->
+		if this._collection.find(selector, {fields:{_id:1}}).count() is 0
+			return false
+		return true
 
 	delete: ->
 		response = this._collection.remove {_id:this._id}			# Remove document from its collection
