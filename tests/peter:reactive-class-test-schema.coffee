@@ -3,6 +3,16 @@ TestCollection2 = new Meteor.Collection null
 
 Schema = {}
 
+Schema.UserCountry = new SimpleSchema(
+	name:
+		type: String
+
+	code:
+		type: String
+		regEx: /^[A-Z]{2}$/
+)
+
+
 ##
 ## Basic Schema to test against
 ##
@@ -33,22 +43,16 @@ Schema.Person = new SimpleSchema(
 			"female"
 		]
 		optional: true
+
+	country:
+		type: Schema.UserCountry
+		optional: true
 )
 
 
 ##
 ## More complex schema that describes a Meteor user
 ##
-
-Schema.UserCountry = new SimpleSchema(
-	name:
-		type: String
-
-	code:
-		type: String
-		regEx: /^[A-Z]{2}$/
-)
-
 
 Schema.UserProfile = new SimpleSchema(
 	firstName:

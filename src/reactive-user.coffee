@@ -15,3 +15,12 @@ class ReactiveUser extends ReactiveClassBase
 
 	save: ->
 		this._collection.update {_id:this._id}, this._toObject()
+
+
+	userId: -> true
+
+
+	isInRole: -> true
+
+
+	addToRole: -> true

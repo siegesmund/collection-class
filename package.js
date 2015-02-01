@@ -19,7 +19,7 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function(api) {
-  api.use(['coffeescript','underscore', 'tinytest']);
+  api.use(['coffeescript','underscore','tinytest', 'test-helpers', 'meteor-platform']);
   api.use(['aldeed:collection2@2.3.1', 'aldeed:simple-schema@1.3.0', 'alanning:roles@1.2.13']);
   api.use('peter:reactive-class');
   api.addFiles(['tests/peter:reactive-class-test-schema.coffee', 'tests/peter:reactive-class-tests.coffee', 'tests/peter:reactive-user-tests.coffee']);
