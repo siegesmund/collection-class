@@ -1,7 +1,6 @@
 #
 # A small wrapper around MiniMongo that provides a
 # class-based interface to Meteor/Mongo collections
-#
 # Requires aldeed:simple-schema, aldeed:collection2
 #
 #
