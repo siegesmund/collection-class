@@ -1,4 +1,5 @@
 
+# Todo: Test setter rollback when document not found
 
 testClass = undefined
 
@@ -101,7 +102,6 @@ Tinytest.add "ReactiveClassBase: an instance's delete method removes its' corres
 	# testClass._new()
 	test.equal TestCollection.find().fetch().length, 1
 	collectionObject = TestCollection.find().fetch()[0]
-	console.log collectionObject
 	test.equal testClass._id, collectionObject._id
 	testClass.delete()
 	test.equal TestCollection.find().fetch().length, 0
@@ -110,19 +110,13 @@ Tinytest.add "ReactiveClassBase: an instance's delete method removes its' corres
 
 # Test using basic schema
 
-'''
-Tinytest.add "An instance's delete method removes all methods and properties from the instance", (test) ->
+
+Tinytest.add "An instance's delete method removes all properties from the instance", (test) ->
 	setUp()
-	testClass._new()
 	testClass.setFirstName("Test")
 	testClass.setLastName("Case")
-	console.log testClass
-	test.equal testClass.methods().length, 5
 	test.equal testClass.properties().length, 2
 
 	testClass.delete()
-	console.log testClass
-	test.equal testClass.methods().length, 0
 	test.equal testClass.properties().length, 0
 	return
-'''

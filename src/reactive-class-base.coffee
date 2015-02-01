@@ -1,10 +1,16 @@
 # A simple interface for objects and documents
 # Requires aldeed:simple-schema, aldeed:collection2
 
+# Can:
+# Create a new object and manipulate its' properties using getters and setters
+# Finding and workign with existing objects is left to subclasses
+
 class ReactiveClassBase
 
 	# Reactive Class
 	constructor: (collection) ->
+
+		String::titleCase = -> this.charAt(0).toUpperCase() + this.substring(1)
 		if collection
 			this._collection = collection				# Save a pointer to the collection
 			this._id = this._collection.insert({})		# Create a new document
@@ -18,13 +24,12 @@ class ReactiveClassBase
 	# Creates a getter and setter for a given object path
 	_createAccessorMethods: (objectPath) ->
 		# Utility function to capitalize the first letter of a string
-		capitalize = (string) -> string.charAt(0).toUpperCase() + string.substring(1)
 
 		# This code parses the object path stored in the simple-schema schemaKeys;
 		# it condenses "." separated fields into camel case method names
 		if objectPath.indexOf('$') < 0	# Do not create getters and setters for array items
-			getterName = 'get' + capitalize _.reduce objectPath.split('.'), (memo, string) -> memo + capitalize string
-			setterName = 'set' + capitalize _.reduce objectPath.split('.'), (memo, string) -> memo + capitalize string
+			getterName = 'get' +  (_.reduce objectPath.split('.'), (memo, string) -> memo + string.titleCase()).titleCase()
+			setterName = 'set' + (_.reduce objectPath.split('.'), (memo, string) -> memo +  string.titleCase()).titleCase()
 			this[getterName] = this._getter(objectPath)
 			this[setterName] = this._setter(objectPath)
 		return
@@ -43,14 +48,20 @@ class ReactiveClassBase
 		_this = this							# store a reference to the base object as we won't be able to access it inside the closure
 		return (value) ->
 			p = _this							# store a reference to the base object that we can traverse
+
+			# This code is all to set the local value
 			items = objectPath.split('.')
 			for item,index in items			# need to get the index so we can tell where we're at on the array
 				if index < (items.length-1) # if we're at the end, skip to setting the value
 					if ! p[item]
 						p[item] = {} 	# create an object if one doesn't exist (but only if we're not at the end)
 					p = p[item] 		# advance one level
+			oldValue = p[item]
 			p[item] = value				# when we're at the end, set the value
-			_this._save(objectPath, value)
+
+			if _this._save(objectPath, value) is 0
+				p[item] = oldValue
+				throw new Error "Error: Mongo document not found. Value not set."
 			return
 
 	#
@@ -60,9 +71,7 @@ class ReactiveClassBase
 	_save: (path, value) ->
 		modifier = {}
 		modifier[path] = value
-		console.log "Modifier ", modifier
-		this._collection.update({_id:this._id}, {$set:modifier})
-		return
+		return this._collection.update({_id:this._id}, {$set:modifier})
 
 	_toObject: ->
 		return _.pick(this, this.properties())
@@ -95,6 +104,9 @@ class ReactiveClassBase
 		return _.filter (_.difference Object.keys(this), this.methods()), (item) -> item.indexOf('_') < 0
 
 	delete: ->
-		this._collection.remove {_id:this._id}			# Remove document from its collection
-		delete this[key] for key in Object.keys(this) 	# Remove all properties
-		return this
+		affected = this._collection.remove {_id:this._id}			# Remove document from its collection
+		if affected is 1
+			delete this[key] for key in Object.keys(this) 	# Remove all properties and methods
+		else
+			throw new Error 'error when attempting to delete document'
+		return
